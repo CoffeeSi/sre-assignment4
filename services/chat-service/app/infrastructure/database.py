@@ -8,4 +8,4 @@ async def create_redis(app: FastAPI, url: str) -> None:
 
 
 async def close_redis(app: FastAPI) -> None:
-    await app.state.redis.aclose()
+    await app.state.redis.close()
