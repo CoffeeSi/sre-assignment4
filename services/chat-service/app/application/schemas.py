@@ -1,0 +1,21 @@
+from pydantic import BaseModel, Field
+
+
+class MessageCreate(BaseModel):
+    user_id: int = Field(..., gt=0)
+    text: str = Field(..., min_length=1, max_length=500)
+
+
+class MessageOut(BaseModel):
+    user_id: int
+    text: str
+
+
+class RoomMessagesResponse(BaseModel):
+    room: str
+    messages: list[MessageOut]
+
+
+class SendMessageResponse(BaseModel):
+    room: str
+    message: MessageOut
