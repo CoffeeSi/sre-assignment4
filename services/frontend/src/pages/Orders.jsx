@@ -19,7 +19,8 @@ export default function Orders() {
     try {
       const data = await getAllOrders()
       setOrders(data.orders)
-    } catch {
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to load orders')
       setOrders([])
     }
   }
@@ -28,6 +29,10 @@ export default function Orders() {
     e.preventDefault()
     setError('')
     setOrder(null)
+    if (!userId) {
+      setError('User session invalid. Please log in again.')
+      return
+    }
     try {
       const data = await createOrder(userId, parseInt(productId), parseInt(quantity))
       setOrder(data)

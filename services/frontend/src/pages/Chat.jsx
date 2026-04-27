@@ -11,6 +11,7 @@ export default function Chat() {
   const userId = user.id
 
   useEffect(() => {
+    if (!userId) return
     loadMessages()
   }, [room])
 
@@ -26,6 +27,10 @@ export default function Chat() {
   async function handleSend(e) {
     e.preventDefault()
     setError('')
+    if (!userId) {
+      setError('User session invalid. Please log in again.')
+      return
+    }
     try {
       await sendMessage(room, userId, text)
       setText('')
