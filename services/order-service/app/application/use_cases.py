@@ -1,7 +1,7 @@
 from app.domain.exceptions import OrderNotFoundError, ProductNotFoundError, UserNotFoundError
 from app.domain.repositories import IOrderRepository
 from app.infrastructure.http_clients import get_product_price, verify_user_exists
-from app.application.schemas import OrderCreate, OrderResponse
+from app.application.schemas import OrderCreate, OrderResponse, OrdersListResponse
 
 
 class CreateOrderUseCase:
@@ -43,4 +43,25 @@ class GetOrderUseCase:
             quantity=order.quantity,
             total_price=order.total_price,
             created_at=order.created_at,
+        )
+
+
+class GetAllOrdersUseCase:
+    def __init__(self, repository: IOrderRepository) -> None:
+        self._repository = repository
+
+    async def execute(self) -> OrdersListResponse:
+        orders = await self._repository.get_all()
+        return OrdersListResponse(
+            orders=[
+                OrderResponse(
+                    id=o.id,
+                    user_id=o.user_id,
+                    product_id=o.product_id,
+                    quantity=o.quantity,
+                    total_price=o.total_price,
+                    created_at=o.created_at,
+                )
+                for o in orders
+            ]
         )

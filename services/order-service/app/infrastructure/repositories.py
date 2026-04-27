@@ -26,6 +26,24 @@ class PostgresOrderRepository(IOrderRepository):
             created_at=row["created_at"],
         )
 
+    async def get_all(self) -> list[Order]:
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT id, user_id, product_id, quantity, total_price, created_at "
+                "FROM orders ORDER BY created_at DESC",
+            )
+        return [
+            Order(
+                id=row["id"],
+                user_id=row["user_id"],
+                product_id=row["product_id"],
+                quantity=row["quantity"],
+                total_price=row["total_price"],
+                created_at=row["created_at"],
+            )
+            for row in rows
+        ]
+
     async def create(
         self,
         user_id: int,

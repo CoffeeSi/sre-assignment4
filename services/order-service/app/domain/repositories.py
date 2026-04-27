@@ -8,6 +8,9 @@ class IOrderRepository(ABC):
     async def get_by_id(self, order_id: int) -> Order | None: ...
 
     @abstractmethod
+    async def get_all(self) -> list[Order]: ...
+
+    @abstractmethod
     async def create(
         self,
         user_id: int,

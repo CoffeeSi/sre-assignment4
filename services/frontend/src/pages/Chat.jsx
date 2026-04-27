@@ -3,10 +3,12 @@ import { sendMessage, getMessages } from '../api/chat.js'
 
 export default function Chat() {
   const [room, setRoom] = useState('general')
-  const [userId, setUserId] = useState('')
   const [text, setText] = useState('')
   const [messages, setMessages] = useState([])
   const [error, setError] = useState('')
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const userId = user.id
 
   useEffect(() => {
     loadMessages()
@@ -25,7 +27,7 @@ export default function Chat() {
     e.preventDefault()
     setError('')
     try {
-      await sendMessage(room, parseInt(userId), text)
+      await sendMessage(room, userId, text)
       setText('')
       loadMessages()
     } catch (err) {
@@ -50,8 +52,7 @@ export default function Chat() {
         ))}
       </div>
       <form onSubmit={handleSend}>
-        <input placeholder="Your User ID" type="number" value={userId} onChange={e => setUserId(e.target.value)} required style={{ marginRight: 8 }} />
-        <input placeholder="Message" value={text} onChange={e => setText(e.target.value)} required style={{ marginRight: 8, width: 250 }} />
+        <input placeholder="Message" value={text} onChange={e => setText(e.target.value)} required style={{ marginRight: 8, width: 300 }} />
         <button type="submit">Send</button>
       </form>
       {error && <p style={{ color: 'red' }}>{error}</p>}

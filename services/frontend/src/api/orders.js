@@ -9,3 +9,8 @@ export async function getOrder(order_id) {
   const { data } = await orderClient.get(`/orders/${order_id}`)
   return data
 }
+
+export async function getAllOrders() {
+  const { data } = await orderClient.get('/orders')
+  return data
+}

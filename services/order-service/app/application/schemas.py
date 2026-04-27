@@ -17,3 +17,7 @@ class OrderResponse(BaseModel):
     quantity: int
     total_price: Decimal
     created_at: datetime
+
+
+class OrdersListResponse(BaseModel):
+    orders: list[OrderResponse]
