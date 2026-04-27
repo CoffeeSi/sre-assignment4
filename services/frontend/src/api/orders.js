@@ -1,7 +1,7 @@
 import { orderClient } from './client.js'
 
-export async function createOrder(user_id, product_id, quantity) {
-  const { data } = await orderClient.post('/orders', { user_id, product_id, quantity })
+export async function createOrder(product_id, quantity) {
+  const { data } = await orderClient.post('/orders', { product_id, quantity })
   return data
 }
 

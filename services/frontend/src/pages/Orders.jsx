@@ -8,9 +8,6 @@ export default function Orders() {
   const [orders, setOrders] = useState([])
   const [error, setError] = useState('')
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const userId = user.id
-
   useEffect(() => {
     loadOrders()
   }, [])
@@ -29,12 +26,8 @@ export default function Orders() {
     e.preventDefault()
     setError('')
     setOrder(null)
-    if (!userId) {
-      setError('User session invalid. Please log in again.')
-      return
-    }
     try {
-      const data = await createOrder(userId, parseInt(productId), parseInt(quantity))
+      const data = await createOrder(parseInt(productId), parseInt(quantity))
       setOrder(data)
       setProductId('')
       setQuantity('')

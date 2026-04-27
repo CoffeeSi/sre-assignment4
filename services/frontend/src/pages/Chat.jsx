@@ -7,11 +7,7 @@ export default function Chat() {
   const [messages, setMessages] = useState([])
   const [error, setError] = useState('')
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const userId = user.id
-
   useEffect(() => {
-    if (!userId) return
     loadMessages()
   }, [room])
 
@@ -27,12 +23,8 @@ export default function Chat() {
   async function handleSend(e) {
     e.preventDefault()
     setError('')
-    if (!userId) {
-      setError('User session invalid. Please log in again.')
-      return
-    }
     try {
-      await sendMessage(room, userId, text)
+      await sendMessage(room, text)
       setText('')
       loadMessages()
     } catch (err) {
@@ -52,7 +44,7 @@ export default function Chat() {
         {messages.length === 0 && <p style={{ color: '#aaa' }}>No messages yet.</p>}
         {messages.map((m, i) => (
           <div key={i} style={{ marginBottom: 6 }}>
-            <strong>User {m.user_id}:</strong> {m.text}
+            <strong>{m.user_name}:</strong> {m.text}
           </div>
         ))}
       </div>
