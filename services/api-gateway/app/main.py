@@ -10,9 +10,6 @@ from fastapi.responses import JSONResponse, Response
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from pythonjsonlogger import jsonlogger
 
-# ---------------------------------------------------------------------------
-# Upstream service map: path prefix -> base URL
-# ---------------------------------------------------------------------------
 UPSTREAMS: dict[str, str] = {
     "/register": os.getenv("AUTH_SERVICE_URL", "http://auth-service:8000"),
     "/login": os.getenv("AUTH_SERVICE_URL", "http://auth-service:8000"),
@@ -23,7 +20,6 @@ UPSTREAMS: dict[str, str] = {
     "/rooms": os.getenv("CHAT_SERVICE_URL", "http://chat-service:8005"),
 }
 
-# Sorted by descending prefix length so the longest match wins first
 _ROUTE_TABLE = sorted(UPSTREAMS.items(), key=lambda x: len(x[0]), reverse=True)
 
 
@@ -35,9 +31,6 @@ def _resolve_upstream(path: str) -> str | None:
     return None
 
 
-# ---------------------------------------------------------------------------
-# Hop-by-hop headers that must not be forwarded
-# ---------------------------------------------------------------------------
 _HOP_BY_HOP = frozenset(
     {
         "connection",
@@ -53,9 +46,6 @@ _HOP_BY_HOP = frozenset(
 )
 
 
-# ---------------------------------------------------------------------------
-# Application lifecycle
-# ---------------------------------------------------------------------------
 _UPSTREAM_TIMEOUT = float(os.getenv("UPSTREAM_TIMEOUT", "30"))
 
 
@@ -66,9 +56,6 @@ async def lifespan(app: FastAPI):
     await app.state.http_client.aclose()
 
 
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
 def _setup_logging() -> None:
     handler = logging.StreamHandler(sys.stdout)
     formatter = jsonlogger.JsonFormatter(
@@ -84,9 +71,6 @@ def _setup_logging() -> None:
 _setup_logging()
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# FastAPI app
-# ---------------------------------------------------------------------------
 app = FastAPI(title="api-gateway", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
@@ -97,9 +81,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------------------------
-# Prometheus metrics
-# ---------------------------------------------------------------------------
 REQUEST_COUNT = Counter(
     "api_gateway_requests_total",
     "Total HTTP requests handled by the API Gateway",
@@ -113,9 +94,6 @@ REQUEST_LATENCY = Histogram(
 )
 
 
-# ---------------------------------------------------------------------------
-# Built-in endpoints
-# ---------------------------------------------------------------------------
 @app.get("/health")
 async def health() -> JSONResponse:
     return JSONResponse({"status": "ok", "service": "api-gateway"})
@@ -126,9 +104,6 @@ async def metrics() -> Response:
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
-# ---------------------------------------------------------------------------
-# Catch-all reverse proxy
-# ---------------------------------------------------------------------------
 @app.api_route(
     "/{full_path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
@@ -163,7 +138,9 @@ async def proxy(request: Request, full_path: str) -> Response:
             )
         except httpx.RequestError as exc:
             logger.error("upstream request failed", extra={"error": str(exc)})
-            raise HTTPException(status_code=502, detail="Bad gateway: upstream service unavailable")
+            raise HTTPException(
+                status_code=502, detail="Bad gateway: upstream service unavailable"
+            )
 
     REQUEST_COUNT.labels(
         method=request.method,

@@ -26,12 +26,18 @@ services:
       retries: 10
 
   auth-service:
-    build: ./services/auth-service
+    image: auth-service
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
     ports:
       - "8000:8000"
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/app_db
       - SERVICE_PORT=8000
@@ -39,34 +45,52 @@ services:
       - JWT_EXPIRE_HOURS=24
 
   user-service:
-    build: ./services/user-service
+    image: user-service
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
     ports:
       - "8001:8001"
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/app_db
       - SERVICE_PORT=8001
 
   product-service:
-    build: ./services/product-service
+    image: product-service
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
     ports:
       - "8002:8002"
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/app_db
       - SERVICE_PORT=8002
 
   order-service:
-    build: ./services/order-service
+    image: order-service
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
     ports:
       - "8003:8003"
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/app_db
       - SERVICE_PORT=8003
@@ -75,20 +99,33 @@ services:
       - JWT_ALGORITHM=HS256
 
   chat-service:
-    build: ./services/chat-service
+    image: chat-service
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
     ports:
       - "8005:8005"
-    depends_on:
-      redis:
-        condition: service_healthy
     environment:
       - REDIS_URL=redis://redis:6379/0
       - SERVICE_PORT=8005
       - JWT_SECRET_KEY=dev-secret-key-change-in-production
       - JWT_ALGORITHM=HS256
+    depends_on:
+      - redis
 
   api-gateway:
-    build: ./services/api-gateway
+    image: api-gateway
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
     ports:
       - "8080:8080"
     depends_on:
@@ -106,16 +143,19 @@ services:
       - CHAT_SERVICE_URL=http://chat-service:8005
 
   frontend:
-    build: ./services/frontend
+    image: frontend
     ports:
       - "3000:3000"
     depends_on:
-      - auth-service
-      - user-service
-      - product-service
-      - order-service
-      - chat-service
-
+      - api-gateway
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+    
   prometheus:
     image: prom/prometheus:latest
     ports:
