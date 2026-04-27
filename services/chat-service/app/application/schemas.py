@@ -2,12 +2,11 @@ from pydantic import BaseModel, Field
 
 
 class MessageCreate(BaseModel):
-    user_id: int = Field(..., gt=0)
     text: str = Field(..., min_length=1, max_length=500)
 
 
 class MessageOut(BaseModel):
-    user_id: int
+    user_name: str
     text: str
 
 
