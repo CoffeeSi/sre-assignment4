@@ -38,12 +38,52 @@ docker compose up --build
 
 После старта будут доступны:
 
+- **API Gateway**: http://localhost:8080 ← единая точка входа
 - **Frontend**: http://localhost:3000
 - Auth API: http://localhost:8000/docs
 - User API: http://localhost:8001/docs
 - Product API: http://localhost:8002/docs
 - Order API: http://localhost:8003/docs
 - Chat API: http://localhost:8005/docs
+
+## API Gateway (Reverse Proxy)
+
+Все внешние запросы можно направлять через единый шлюз на порту **8080**, который маршрутизирует их к нужному микросервису по префиксу пути:
+
+| Префикс пути         | Upstream              |
+|----------------------|-----------------------|
+| `/register`, `/login`, `/auth/*` | auth-service:8000    |
+| `/users/*`           | user-service:8001     |
+| `/products/*`        | product-service:8002  |
+| `/orders/*`          | order-service:8003    |
+| `/rooms/*`           | chat-service:8005     |
+
+Шлюз прозрачно передаёт заголовки (`Authorization` и др.), тело запроса и query-параметры. Встроенные эндпоинты шлюза: `/health` и `/metrics`.
+
+### Примеры через Gateway
+
+```bash
+# Регистрация
+curl -X POST http://localhost:8080/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@example.com","password":"secret"}'
+
+# Вход
+curl -X POST http://localhost:8080/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@example.com","password":"secret"}'
+
+# Создать товар
+curl -X POST http://localhost:8080/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Keyboard","price":99.99}'
+
+# Создать заказ
+curl -X POST http://localhost:8080/orders \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"product_id":1,"quantity":2}'
+```
 
 ## Аутентификация (auth-service)
 

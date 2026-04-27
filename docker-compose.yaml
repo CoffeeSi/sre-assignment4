@@ -87,6 +87,24 @@ services:
       - JWT_SECRET_KEY=dev-secret-key-change-in-production
       - JWT_ALGORITHM=HS256
 
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      - user-service
+      - product-service
+      - order-service
+      - chat-service
+    environment:
+      - SERVICE_PORT=8080
+      - AUTH_SERVICE_URL=http://auth-service:8000
+      - USER_SERVICE_URL=http://user-service:8001
+      - PRODUCT_SERVICE_URL=http://product-service:8002
+      - ORDER_SERVICE_URL=http://order-service:8003
+      - CHAT_SERVICE_URL=http://chat-service:8005
+
   frontend:
     build: ./services/frontend
     ports:
