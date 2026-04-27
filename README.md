@@ -97,14 +97,16 @@ curl -X POST http://localhost:8002/products \
 
 ```bash
 curl -X POST http://localhost:8003/orders \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
-  -d '{"user_id":1,"product_id":1,"quantity":2}'
+  -d '{"product_id":1,"quantity":2}'
 ```
 
 4. Отправить сообщение в чат:
 
 ```bash
 curl -X POST http://localhost:8005/rooms/general/messages \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
-  -d '{"user_id":1,"text":"Hello team"}'
+  -d '{"text":"Hello team"}'
 ```

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from app.application.schemas import (
     MessageCreate,
@@ -6,8 +6,12 @@ from app.application.schemas import (
     SendMessageResponse,
 )
 from app.application.use_cases import GetMessagesUseCase, SendMessageUseCase
-from app.domain.exceptions import UserNotFoundError
-from app.interfaces.dependencies import get_get_messages_use_case, get_send_message_use_case
+from app.interfaces.dependencies import (
+    CurrentUser,
+    get_current_user,
+    get_get_messages_use_case,
+    get_send_message_use_case,
+)
 
 router = APIRouter()
 
@@ -17,16 +21,21 @@ async def health() -> dict:
     return {"service": "chat-service", "status": "ok"}
 
 
-@router.post("/rooms/{room}/messages", response_model=SendMessageResponse, status_code=201)
+@router.post(
+    "/rooms/{room}/messages", response_model=SendMessageResponse, status_code=201
+)
 async def send_message(
     room: str,
     payload: MessageCreate,
+    current_user: CurrentUser = Depends(get_current_user),
     use_case: SendMessageUseCase = Depends(get_send_message_use_case),
 ) -> SendMessageResponse:
-    try:
-        return await use_case.execute(room=room, data=payload)
-    except UserNotFoundError:
-        raise HTTPException(status_code=404, detail="User not found in user-service")
+    return await use_case.execute(
+        room=room,
+        data=payload,
+        user_id=current_user.user_id,
+        user_name=current_user.user_name,
+    )
 
 
 @router.get("/rooms/{room}/messages", response_model=RoomMessagesResponse)

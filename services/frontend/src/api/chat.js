@@ -1,7 +1,7 @@
 import { chatClient } from './client.js'
 
-export async function sendMessage(room, user_id, text) {
-  const { data } = await chatClient.post(`/rooms/${room}/messages`, { user_id, text })
+export async function sendMessage(room, text) {
+  const { data } = await chatClient.post(`/rooms/${room}/messages`, { text })
   return data
 }
 

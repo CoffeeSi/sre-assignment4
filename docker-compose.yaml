@@ -70,8 +70,9 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/app_db
       - SERVICE_PORT=8003
-      - USER_SERVICE_URL=http://user-service:8001
       - PRODUCT_SERVICE_URL=http://product-service:8002
+      - JWT_SECRET_KEY=dev-secret-key-change-in-production
+      - JWT_ALGORITHM=HS256
 
   chat-service:
     build: ./services/chat-service
@@ -80,12 +81,11 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      user-service:
-        condition: service_started
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - USER_SERVICE_URL=http://user-service:8001
       - SERVICE_PORT=8005
+      - JWT_SECRET_KEY=dev-secret-key-change-in-production
+      - JWT_ALGORITHM=HS256
 
   frontend:
     build: ./services/frontend
@@ -98,6 +98,27 @@ services:
       - order-service
       - chat-service
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - auth-service
+      - user-service
+      - product-service
+      - order-service
+      - chat-service
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3002:3000"
+    depends_on:
+      - prometheus
+
 volumes:
   postgres_data:
   redis_data:
+  prometheus_data:

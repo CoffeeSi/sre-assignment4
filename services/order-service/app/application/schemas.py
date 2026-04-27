@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 
 
 class OrderCreate(BaseModel):
-    user_id: int = Field(..., gt=0)
     product_id: int = Field(..., gt=0)
     quantity: int = Field(..., gt=0)
 
@@ -17,3 +16,7 @@ class OrderResponse(BaseModel):
     quantity: int
     total_price: Decimal
     created_at: datetime
+
+
+class OrdersListResponse(BaseModel):
+    orders: list[OrderResponse]
