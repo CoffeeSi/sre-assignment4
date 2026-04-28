@@ -11,7 +11,6 @@ resource "aws_instance" "assignment_instance" {
   key_name = var.key_name
   vpc_security_group_ids = [
     aws_security_group.main_sg.id,
-    aws_security_group.api_sg.id
     ]
 
   provisioner "file" {
@@ -81,28 +80,18 @@ resource "aws_security_group" "main_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "api_sg" {
-  # APIs
-  ingress {
-    from_port   = var.port_api_from
-    to_port     = var.port_api_to
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] 
-  }
-
   # API Gateway
   ingress {
     from_port   = var.port_api_gateway
     to_port     = var.port_api_gateway
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] 
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }

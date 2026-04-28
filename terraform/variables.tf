@@ -68,18 +68,6 @@ variable "port_prometheus" {
   default = 9090
 }
 
-variable "port_api_from" {
-  type = number
-  description = "API from port"
-  default = 8000
-}
-
-variable "port_api_to" {
-  type = number
-  description = "API to port"
-  default = 8005
-}
-
 variable "port_api_gateway" {
   type = number
   description = "API Gateway port"

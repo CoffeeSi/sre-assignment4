@@ -27,8 +27,10 @@ cd sre-assignment4
 
 sudo docker swarm init
 
-export INSTANCE_IP=$(hostname -I | awk '{print $1}')
+export INSTANCE_IP=$(curl -s http://checkip.amazonaws.com)
 
-sudo docker compose build --build-arg VITE_API_IP=$(INSTANCE_IP)
+echo "Deploying on IP: $INSTANCE_IP"
+
+sudo docker compose build --build-arg VITE_API_IP=$INSTANCE_IP
 
 sudo docker stack deploy -c docker-compose.yaml assignment4
