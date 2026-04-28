@@ -17,7 +17,7 @@ This project contains 5 FastAPI microservices, a React frontend, and Docker Comp
 - Docker Compose
 - React 18 + Vite + React Router DOM v6
 
-## Architecture (DDD / Clean Architecture)
+## Architecture
 
 Each service is divided into 4 layers inside `app/`:
 
@@ -52,13 +52,13 @@ After startup, the following will be available:
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3002
 
-## API Gateway (Reverse Proxy)
+## API Gateway
 
 All external requests can be routed through a single gateway on port **8080**, which routes them to the appropriate microservice by path prefix:
 
-| Path Prefix      | Upstream              |
+| Path Prefix          | Upstream              |
 |----------------------|-----------------------|
-| `/register`, `/login`, `/auth/*` | auth-service:8000    |
+| `/auth/*`            | auth-service:8000     |
 | `/users/*`           | user-service:8001     |
 | `/products/*`        | product-service:8002  |
 | `/orders/*`          | order-service:8003    |
@@ -194,6 +194,10 @@ The Terraform configuration for this project is defined in the `terraform` direc
 
 1. Initialize Terraform:
 
+Configure your terraform variables in `terraform.tfvars`.
+
+then run the following commands in the terminal:
+
 ```bash
 cd terraform
 # Initialize Terraform
@@ -222,16 +226,7 @@ terraform destroy
 
 ## Monitoring & Observability
 
-All services expose the following endpoints:
-
-- **Health Check**: `GET /health` – returns `{"status": "ok"}` when service is running
-- **Metrics**: `GET /metrics` – Prometheus metrics in text format (requests_total, etc.)
-
-### Example
-
-```bash
-curl http://localhost:8000/health
-curl http://localhost:8000/metrics
-```
+### Prometheus & Grafana
 
 Prometheus scrapes all services at `http://localhost:9090` and Grafana visualizes them at `http://localhost:3002`.
+
