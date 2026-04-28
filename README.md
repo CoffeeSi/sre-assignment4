@@ -50,7 +50,7 @@ After startup, the following will be available:
 - Order API: http://localhost:8003/docs
 - Chat API: http://localhost:8005/docs
 - Prometheus: http://localhost:9090
-- Grafana: http://localhost:3002
+- Grafana: http://localhost:3000
 
 ## API Gateway
 
@@ -228,5 +228,5 @@ terraform destroy
 
 ### Prometheus & Grafana
 
-Prometheus scrapes all services at `http://localhost:9090` and Grafana visualizes them at `http://localhost:3002`.
+Prometheus scrapes all services at `http://localhost:9090` and Grafana visualizes them at `http://localhost:3000`.
 
