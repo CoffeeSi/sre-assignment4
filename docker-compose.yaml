@@ -27,6 +27,7 @@ services:
 
   auth-service:
     image: auth-service
+    build: ./services/auth-service
     deploy:
       replicas: 3
       restart_policy:
@@ -46,6 +47,7 @@ services:
 
   user-service:
     image: user-service
+    build: ./services/user-service
     deploy:
       replicas: 3
       restart_policy:
@@ -63,6 +65,7 @@ services:
 
   product-service:
     image: product-service
+    build: ./services/product-service
     deploy:
       replicas: 3
       restart_policy:
@@ -80,6 +83,7 @@ services:
 
   order-service:
     image: order-service
+    build: ./services/order-service
     deploy:
       replicas: 3
       restart_policy:
@@ -100,6 +104,7 @@ services:
 
   chat-service:
     image: chat-service
+    build: ./services/chat-service
     deploy:
       replicas: 3
       restart_policy:
@@ -119,6 +124,7 @@ services:
 
   api-gateway:
     image: api-gateway
+    build: ./services/api-gateway
     deploy:
       replicas: 3
       restart_policy:
@@ -144,6 +150,7 @@ services:
 
   frontend:
     image: frontend
+    build: ./services/frontend
     ports:
       - "80:80"
     depends_on:
