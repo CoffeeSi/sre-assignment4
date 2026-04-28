@@ -25,3 +25,9 @@ terraform_apply:
 
 terraform_destroy:
 	cd terraform && terraform destroy -auto-approve
+
+terraform_auto_restart:
+	cd terraform && terraform destroy -auto-approve
+	cd terraform && terraform init
+	cd terraform && terraform plan
+	cd terraform && terraform apply -auto-approve
