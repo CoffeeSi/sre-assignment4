@@ -1,15 +1,15 @@
 # FastAPI Microservices (SRE Assignment 4)
 
-Проект содержит 5 микросервисов на FastAPI, React-фронтенд и инфраструктуру на Docker Compose:
+This project contains 5 FastAPI microservices, a React frontend, and Docker Compose infrastructure:
 
-- auth-service (регистрация, вход, JWT)
-- user-service (пользователи)
-- product-service (товары)
-- order-service (заказы)
-- chat-service (чат на Redis, проверка пользователя через user-service)
+- auth-service (registration, login, JWT)
+- user-service (user management)
+- product-service (products)
+- order-service (orders)
+- chat-service (chat on Redis, user verification via user-service)
 - frontend (React + Vite SPA)
 
-## Стек
+## Tech Stack
 
 - FastAPI + Uvicorn
 - PostgreSQL 17
@@ -17,40 +17,46 @@
 - Docker Compose
 - React 18 + Vite + React Router DOM v6
 
-## Архитектура (DDD / Clean Architecture)
+## Architecture (DDD / Clean Architecture)
 
-Каждый сервис разделён на 4 слоя внутри `app/`:
+Each service is divided into 4 layers inside `app/`:
 
 ```
 app/
-  domain/         # Чистые Python dataclass-сущности, абстрактные репозитории (ABC), исключения домена
-  application/    # Pydantic-схемы (DTO), use cases (оркестрация)
-  infrastructure/ # Конкретные реализации репозиториев (asyncpg / Redis), DB-пул
-  interfaces/     # FastAPI APIRouter, Depends-функции для DI
-  main.py         # Фабрика приложения с lifespan
+  domain/         # Clean Python dataclass entities, abstract repositories (ABC), domain exceptions
+  application/    # Pydantic schemas (DTO), use cases (orchestration)
+  infrastructure/ # Concrete repository implementations (asyncpg / Redis), DB pool
+  interfaces/     # FastAPI APIRouter, Depends functions for DI
+  main.py         # Application factory with lifespan
 ```
 
-## Запуск
+## Running
+
+### Development (Docker Compose)
 
 ```bash
-docker compose up --build
+docker swarm init
+docker compose build
+docker stack deploy -c docker-compose.yaml assignment
 ```
 
-После старта будут доступны:
+After startup, the following will be available:
 
-- **API Gateway**: http://localhost:8080 ← единая точка входа
-- **Frontend**: http://localhost:3000
+- API Gateway: http://localhost:8080
+- Frontend: http://localhost:3000
 - Auth API: http://localhost:8000/docs
 - User API: http://localhost:8001/docs
 - Product API: http://localhost:8002/docs
 - Order API: http://localhost:8003/docs
 - Chat API: http://localhost:8005/docs
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3002
 
 ## API Gateway (Reverse Proxy)
 
-Все внешние запросы можно направлять через единый шлюз на порту **8080**, который маршрутизирует их к нужному микросервису по префиксу пути:
+All external requests can be routed through a single gateway on port **8080**, which routes them to the appropriate microservice by path prefix:
 
-| Префикс пути         | Upstream              |
+| Path Prefix      | Upstream              |
 |----------------------|-----------------------|
 | `/register`, `/login`, `/auth/*` | auth-service:8000    |
 | `/users/*`           | user-service:8001     |
@@ -58,38 +64,38 @@ docker compose up --build
 | `/orders/*`          | order-service:8003    |
 | `/rooms/*`           | chat-service:8005     |
 
-Шлюз прозрачно передаёт заголовки (`Authorization` и др.), тело запроса и query-параметры. Встроенные эндпоинты шлюза: `/health` и `/metrics`.
+Built-in gateway endpoints: `/health` and `/metrics`.
 
-### Примеры через Gateway
+### Examples via Gateway
 
 ```bash
-# Регистрация
+# Register
 curl -X POST http://localhost:8080/register \
   -H "Content-Type: application/json" \
   -d '{"email":"alice@example.com","password":"secret"}'
 
-# Вход
+# Login
 curl -X POST http://localhost:8080/login \
   -H "Content-Type: application/json" \
   -d '{"email":"alice@example.com","password":"secret"}'
 
-# Создать товар
+# Create product
 curl -X POST http://localhost:8080/products \
   -H "Content-Type: application/json" \
   -d '{"name":"Keyboard","price":99.99}'
 
-# Создать заказ
+# Create order
 curl -X POST http://localhost:8080/orders \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{"product_id":1,"quantity":2}'
 ```
 
-## Аутентификация (auth-service)
+## Authentication (auth-service)
 
-Пароли хранятся с bcrypt-хешированием. При логине выдаётся JWT-токен.
+Passwords are stored with bcrypt hashing. Login returns a JWT token.
 
-### Регистрация
+### Registration
 
 ```bash
 curl -X POST http://localhost:8000/register \
@@ -97,27 +103,27 @@ curl -X POST http://localhost:8000/register \
   -d '{"email":"alice@example.com","password":"secret"}'
 ```
 
-### Вход (получение JWT)
+### Login (get JWT)
 
 ```bash
 curl -X POST http://localhost:8000/login \
   -H "Content-Type: application/json" \
   -d '{"email":"alice@example.com","password":"secret"}'
-# Ответ: {"access_token": "...", "token_type": "bearer", "user": {...}}
+# Response: {"access_token": "...", "token_type": "bearer", "user": {...}}
 ```
 
-### Проверка токена
+### Verify Token
 
 ```bash
 curl "http://localhost:8000/auth/verify?token=<access_token>"
-# Ответ: {"user_id": 1, "email": "alice@example.com"}
+# Response: {"user_id": 1, "email": "alice@example.com"}
 ```
 
-JWT настраивается через переменные окружения: `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `JWT_EXPIRE_HOURS`.
+JWT is configured via environment variables: `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `JWT_EXPIRE_HOURS`.
 
-## Примеры запросов
+## Example API Requests
 
-1. Создать пользователя:
+1. Create user:
 
 ```bash
 curl -X POST http://localhost:8001/users \
@@ -125,7 +131,7 @@ curl -X POST http://localhost:8001/users \
   -d '{"name":"Alice","email":"alice@example.com"}'
 ```
 
-2. Создать товар:
+2. Create product:
 
 ```bash
 curl -X POST http://localhost:8002/products \
@@ -133,7 +139,15 @@ curl -X POST http://localhost:8002/products \
   -d '{"name":"Keyboard","price":99.99}'
 ```
 
-3. Создать заказ:
+Get products:
+
+```bash
+curl -X GET http://localhost:8002/products \ 
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json"
+```
+
+3. Create order:
 
 ```bash
 curl -X POST http://localhost:8003/orders \
@@ -142,11 +156,82 @@ curl -X POST http://localhost:8003/orders \
   -d '{"product_id":1,"quantity":2}'
 ```
 
-4. Отправить сообщение в чат:
+Get orders:
+```bash
+curl -X GET http://localhost:8003/orders \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json"
+```
+
+4. Send message to chat room:
 
 ```bash
-curl -X POST http://localhost:8005/rooms/general/messages \
+curl -X POST http://localhost:8005/rooms/{room_name}/messages \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{"text":"Hello team"}'
 ```
+
+Get messages from chat room:
+
+```bash
+curl -X GET http://localhost:8005/rooms/{room_name}/messages \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json"
+```
+
+## Deployment Documentation
+
+### Terraform Configuration
+
+The Terraform configuration for this project is defined in the `terraform` directory.
+ - `main.tf` – contains the necessary resources to provision an EC2 instance on AWS.
+ - `variables.tf` – defines the input variables.
+ - `outputs.tf` – specifies the outputs of the Terraform deployment.
+ - `terraform.tfvars` – contains the actual values for the variables.
+
+### Run Terraform
+
+1. Initialize Terraform:
+
+```bash
+cd terraform
+# Initialize Terraform
+terraform init
+# Plan the changes
+terraform plan
+# Apply the changes
+terraform apply
+```
+
+### Connect to the Instance
+
+After the instance is running, you can connect to it using SSH.
+
+```bash
+ssh -i key.pem <username>@<instance_public_ip>
+```
+
+### Clean Up
+
+To destroy the instance run:
+
+```bash
+terraform destroy
+```
+
+## Monitoring & Observability
+
+All services expose the following endpoints:
+
+- **Health Check**: `GET /health` – returns `{"status": "ok"}` when service is running
+- **Metrics**: `GET /metrics` – Prometheus metrics in text format (requests_total, etc.)
+
+### Example
+
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/metrics
+```
+
+Prometheus scrapes all services at `http://localhost:9090` and Grafana visualizes them at `http://localhost:3002`.

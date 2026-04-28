@@ -13,3 +13,15 @@ ps:
 
 services_inspect:
 	docker stack services $(STACK_NAME)
+
+terraform_init:
+	cd terraform && terraform init
+
+terraform_plan:
+	cd terraform && terraform plan
+
+terraform_apply:
+	cd terraform && terraform apply -auto-approve
+
+terraform_destroy:
+	cd terraform && terraform destroy -auto-approve

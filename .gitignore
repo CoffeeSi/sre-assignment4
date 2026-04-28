@@ -7,3 +7,9 @@ __pycache__/
 .mypy_cache/
 .venv/
 venv/
+.terraform/
+*.tfvars
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+*.pem
