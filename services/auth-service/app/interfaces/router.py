@@ -49,6 +49,7 @@ async def login(
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
 
+@router.get("/verify", response_model=VerifyResponse)
 @router.get("/auth/verify", response_model=VerifyResponse)
 async def verify_token(
     token: str,

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 sudo apt update
 sudo apt install ca-certificates curl
 sudo install -m 0755 -d /etc/apt/keyrings
@@ -25,6 +27,8 @@ cd sre-assignment4
 
 sudo docker swarm init
 
-sudo docker compose build
+export INSTANCE_IP=$(hostname -I | awk '{print $1}')
+
+sudo docker compose build --build-arg VITE_API_IP=$(INSTANCE_IP)
 
 sudo docker stack deploy -c docker-compose.yaml assignment4

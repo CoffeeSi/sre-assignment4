@@ -1,5 +1,7 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
+ARG VITE_API_IP
+ENV VITE_HOST_IP=http://${VITE_API_IP}:8080
 COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
