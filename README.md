@@ -242,7 +242,7 @@ python scripts/log_inspector.py
 
 It highlights database connection failures and possible restart loops so you can narrow down the root cause faster.
 
-## Horizontal scaling (quick reference)
+## Horizontal scaling
 
 To scale services in the running Swarm stack use the provided Makefile helpers or the scale script.
 
