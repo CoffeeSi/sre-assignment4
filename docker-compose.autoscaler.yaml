@@ -1,0 +1,69 @@
+version: '3.9'
+
+services:
+  autoscaler:
+    image: autoscaler:latest
+    user: root
+    environment:
+      PROMETHEUS_URL: http://prometheus:9090
+      SCALING_INTERVAL: 60
+      # Define services to monitor
+      SERVICES: order-service,product-service,api-gateway
+      # Order-service policies
+      ORDER_SERVICE_MIN_REPLICAS: 2
+      ORDER_SERVICE_MAX_REPLICAS: 10
+      ORDER_SERVICE_CPU_UP: 70
+      ORDER_SERVICE_CPU_DOWN: 20
+      ORDER_SERVICE_MEMORY_UP: 80
+      ORDER_SERVICE_MEMORY_DOWN: 30
+      ORDER_SERVICE_RPS_UP: 1000
+      ORDER_SERVICE_RPS_DOWN: 100
+      ORDER_SERVICE_ERROR_RATE: 5
+      ORDER_SERVICE_COOLDOWN: 300
+      # Product-service policies
+      PRODUCT_SERVICE_MIN_REPLICAS: 2
+      PRODUCT_SERVICE_MAX_REPLICAS: 8
+      PRODUCT_SERVICE_CPU_UP: 65
+      PRODUCT_SERVICE_CPU_DOWN: 20
+      PRODUCT_SERVICE_MEMORY_UP: 75
+      PRODUCT_SERVICE_MEMORY_DOWN: 30
+      PRODUCT_SERVICE_RPS_UP: 800
+      PRODUCT_SERVICE_RPS_DOWN: 100
+      PRODUCT_SERVICE_ERROR_RATE: 5
+      PRODUCT_SERVICE_COOLDOWN: 300
+      # API-gateway policies
+      API_GATEWAY_MIN_REPLICAS: 3
+      API_GATEWAY_MAX_REPLICAS: 15
+      API_GATEWAY_CPU_UP: 75
+      API_GATEWAY_CPU_DOWN: 20
+      API_GATEWAY_MEMORY_UP: 80
+      API_GATEWAY_MEMORY_DOWN: 30
+      API_GATEWAY_RPS_UP: 5000
+      API_GATEWAY_RPS_DOWN: 500
+      API_GATEWAY_ERROR_RATE: 5
+      API_GATEWAY_COOLDOWN: 300
+    networks:
+      - assignment4_network
+    depends_on:
+      - prometheus
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+networks:
+  assignment4_network:
+    external: true
+    name: assignment4_assignment4_network

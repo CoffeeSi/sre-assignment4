@@ -13,3 +13,9 @@ venv/
 *.tfstate.backup
 .terraform.lock.hcl
 *.pem
+node_modules/
+
+.env
+.env.local
+.env.*.local
+services/*/.env

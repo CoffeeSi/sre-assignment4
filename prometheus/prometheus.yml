@@ -2,7 +2,24 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files:
+  - '/etc/prometheus/alert_rules.yml'
+  - '/etc/prometheus/capacity_rules.yml'
+
 scrape_configs:
   - job_name: 'fastapi-services'
     static_configs:
       - targets: ['auth-service:8000','user-service:8001','product-service:8002','order-service:8003','chat-service:8005','api-gateway:8080']
+
+  - job_name: 'promtail'
+    static_configs:
+      - targets: ['promtail:9080']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']

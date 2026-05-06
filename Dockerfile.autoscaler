@@ -1,0 +1,18 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir \
+    requests==2.31.0 \
+    docker==7.0.0
+
+# Copy autoscaler script
+COPY scripts/autoscale.py .
+
+# Create non-root user
+RUN useradd -m -u 1000 autoscaler && chown -R autoscaler:autoscaler /app
+USER autoscaler
+
+# Run autoscaler
+CMD ["python3", "autoscale.py"]

@@ -1,15 +1,16 @@
 networks:
   assignment4_network:
-    driver: overlay
+    external: true
+    name: assignment4_assignment4_network
 
 
 services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_DB: app_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB:-app_db}
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
     networks:
       - assignment4_network
     ports:
@@ -21,6 +22,14 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "${POSTGRES_CPU_LIMIT:-1.0}"
+          memory: ${POSTGRES_MEMORY_LIMIT:-1G}
+        reservations:
+          cpus: "${POSTGRES_CPU_RESERVATION:-0.25}"
+          memory: ${POSTGRES_MEMORY_RESERVATION:-256M}
 
   redis:
     image: redis:7-alpine
@@ -37,110 +46,158 @@ services:
   auth-service:
     image: auth-service
     build: ./services/auth-service
+    restart: unless-stopped
     deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
+      replicas: ${SERVICE_REPLICAS:-3}
       update_config:
         parallelism: 1
         delay: 10s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: ${HEALTH_CHECK_INTERVAL:-10s}
+      timeout: ${HEALTH_CHECK_TIMEOUT:-5s}
+      retries: ${HEALTH_CHECK_RETRIES:-3}
+      start_period: ${HEALTH_CHECK_START_PERIOD:-15s}
     networks:
       - assignment4_network
     depends_on:
       - postgres
     environment:
-      - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/app_db
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://user:password@postgres:5432/app_db}
       - SERVICE_PORT=8000
-      - JWT_SECRET_KEY=dev-secret-key-change-in-production
-      - JWT_EXPIRE_HOURS=24
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-secret-key-change-in-production}
+      - JWT_EXPIRE_HOURS=${JWT_EXPIRE_HOURS:-24}
 
   user-service:
     image: user-service
     build: ./services/user-service
+    restart: unless-stopped
     deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
+      replicas: ${SERVICE_REPLICAS:-3}
       update_config:
         parallelism: 1
         delay: 10s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: ${HEALTH_CHECK_INTERVAL:-10s}
+      timeout: ${HEALTH_CHECK_TIMEOUT:-5s}
+      retries: ${HEALTH_CHECK_RETRIES:-3}
+      start_period: ${HEALTH_CHECK_START_PERIOD:-15s}
     networks:
       - assignment4_network
     depends_on:
       - postgres
     environment:
-      - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/app_db
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://user:password@postgres:5432/app_db}
       - SERVICE_PORT=8001
 
   product-service:
     image: product-service
     build: ./services/product-service
+    restart: unless-stopped
     deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
+      replicas: ${SERVICE_REPLICAS:-3}
       update_config:
         parallelism: 1
         delay: 10s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: ${HEALTH_CHECK_INTERVAL:-10s}
+      timeout: ${HEALTH_CHECK_TIMEOUT:-5s}
+      retries: ${HEALTH_CHECK_RETRIES:-3}
+      start_period: ${HEALTH_CHECK_START_PERIOD:-15s}
     networks:
       - assignment4_network
     depends_on:
       - postgres
     environment:
-      - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/app_db
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://user:password@postgres:5432/app_db}
       - SERVICE_PORT=8002
 
   order-service:
     image: order-service
     build: ./services/order-service
+    restart: unless-stopped
     deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
+      endpoint_mode: vip
+      replicas: ${ORDER_SERVICE_REPLICAS:-5}
       update_config:
         parallelism: 1
         delay: 10s
+      resources:
+        limits:
+          cpus: "${ORDER_SERVICE_CPU_LIMIT:-1.5}"
+          memory: ${ORDER_SERVICE_MEMORY_LIMIT:-1G}
+        reservations:
+          cpus: "${ORDER_SERVICE_CPU_RESERVATION:-0.5}"
+          memory: ${ORDER_SERVICE_MEMORY_RESERVATION:-256M}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: ${HEALTH_CHECK_INTERVAL:-10s}
+      timeout: ${HEALTH_CHECK_TIMEOUT:-5s}
+      retries: ${HEALTH_CHECK_RETRIES:-3}
+      start_period: ${HEALTH_CHECK_START_PERIOD:-15s}
     networks:
       - assignment4_network
     depends_on:
       - postgres
+      - redis
     environment:
-      - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/app_db
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://user:password@postgres:5432/app_db}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - SERVICE_PORT=8003
-      - PRODUCT_SERVICE_URL=http://product-service:8002
-      - JWT_SECRET_KEY=dev-secret-key-change-in-production
-      - JWT_ALGORITHM=HS256
+      - PRODUCT_SERVICE_URL=${PRODUCT_SERVICE_URL:-http://product-service:8002}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-secret-key-change-in-production}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
 
   chat-service:
     image: chat-service
     build: ./services/chat-service
+    restart: unless-stopped
     deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
+      replicas: ${SERVICE_REPLICAS:-3}
       update_config:
         parallelism: 1
         delay: 10s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: ${HEALTH_CHECK_INTERVAL:-10s}
+      timeout: ${HEALTH_CHECK_TIMEOUT:-5s}
+      retries: ${HEALTH_CHECK_RETRIES:-3}
+      start_period: ${HEALTH_CHECK_START_PERIOD:-15s}
     networks:
       - assignment4_network
     environment:
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - SERVICE_PORT=8005
-      - JWT_SECRET_KEY=dev-secret-key-change-in-production
-      - JWT_ALGORITHM=HS256
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-secret-key-change-in-production}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
     depends_on:
       - redis
 
   api-gateway:
     image: api-gateway
     build: ./services/api-gateway
+    restart: unless-stopped
     deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
+      endpoint_mode: vip
+      replicas: ${API_GATEWAY_REPLICAS:-3}
       update_config:
         parallelism: 1
         delay: 10s
+      resources:
+        limits:
+          cpus: "${API_GATEWAY_CPU_LIMIT:-1.0}"
+          memory: ${API_GATEWAY_MEMORY_LIMIT:-512M}
+        reservations:
+          cpus: "${API_GATEWAY_CPU_RESERVATION:-0.25}"
+          memory: ${API_GATEWAY_MEMORY_RESERVATION:-128M}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: ${HEALTH_CHECK_INTERVAL:-10s}
+      timeout: ${HEALTH_CHECK_TIMEOUT:-5s}
+      retries: ${HEALTH_CHECK_RETRIES:-3}
+      start_period: ${HEALTH_CHECK_START_PERIOD:-15s}
     networks:
       - assignment4_network
     ports:
@@ -153,26 +210,31 @@ services:
       - chat-service
     environment:
       - SERVICE_PORT=8080
-      - AUTH_SERVICE_URL=http://auth-service:8000
-      - USER_SERVICE_URL=http://user-service:8001
-      - PRODUCT_SERVICE_URL=http://product-service:8002
-      - ORDER_SERVICE_URL=http://order-service:8003
-      - CHAT_SERVICE_URL=http://chat-service:8005
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:8000}
+      - USER_SERVICE_URL=${USER_SERVICE_URL:-http://user-service:8001}
+      - PRODUCT_SERVICE_URL=${PRODUCT_SERVICE_URL:-http://product-service:8002}
+      - ORDER_SERVICE_URL=${ORDER_SERVICE_URL:-http://order-service:8003}
+      - CHAT_SERVICE_URL=${CHAT_SERVICE_URL:-http://chat-service:8005}
 
   frontend:
     image: frontend
     build: ./services/frontend
+    restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
       - api-gateway
     environment:
       - SERVICE_PORT=80
-      - VITE_HOST_IP=http://${INSTANCE_IP}:8080
+      - VITE_HOST_IP=http://${INSTANCE_IP:-127.0.0.1}:8080
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: ${HEALTH_CHECK_INTERVAL:-10s}
+      timeout: ${HEALTH_CHECK_TIMEOUT:-5s}
+      retries: ${HEALTH_CHECK_RETRIES:-3}
+      start_period: ${HEALTH_CHECK_START_PERIOD:-30s}
     deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
+      replicas: ${SERVICE_REPLICAS:-3}
       update_config:
         parallelism: 1
         delay: 10s
@@ -185,12 +247,60 @@ services:
       - assignment4_network
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - ./prometheus/capacity_rules.yml:/etc/prometheus/capacity_rules.yml:ro
     depends_on:
       - auth-service
       - user-service
       - product-service
       - order-service
       - chat-service
+
+  loki:
+    image: grafana/loki:2.9.8
+    command: -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "3100:3100"
+    networks:
+      - assignment4_network
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+
+  promtail:
+    image: grafana/promtail:2.9.8
+    command: -config.file=/etc/promtail/promtail-config.yml
+    networks:
+      - assignment4_network
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    depends_on:
+      - loki
+      - auth-service
+      - user-service
+      - product-service
+      - order-service
+      - chat-service
+      - api-gateway
+      - frontend
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: cadvisor
+    networks:
+      - assignment4_network
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    restart: unless-stopped
 
   grafana:
     image: grafana/grafana:latest
@@ -200,11 +310,25 @@ services:
       - assignment4_network
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
     depends_on:
       - prometheus
     
+  k6:
+    image: grafana/k6:latest
+    command: run /scripts/load_test.js
+    networks:
+      - assignment4_network
+    volumes:
+      - ./scripts:/scripts:ro
+    environment:
+      - API_GATEWAY_URL=http://api-gateway:8080
+    depends_on:
+      - api-gateway
+
 volumes:
   postgres_data:
   redis_data:
   prometheus_data:
   grafana_data:
+  loki_data:

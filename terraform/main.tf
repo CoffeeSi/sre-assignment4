@@ -9,9 +9,15 @@ resource "aws_instance" "assignment_instance" {
   ami           = var.ami_id
   instance_type = var.instance_type
   key_name = var.key_name
+  monitoring = var.enable_detailed_monitoring
   vpc_security_group_ids = [
     aws_security_group.main_sg.id,
     ]
+
+  root_block_device {
+    volume_size = var.root_volume_size
+    volume_type = "gp3"
+  }
 
   provisioner "file" {
     source      = "docker-deploy.sh"

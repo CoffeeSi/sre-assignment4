@@ -2,6 +2,7 @@ import asyncio
 import asyncpg
 import socket
 import logging
+import os
 from fastapi import FastAPI
 
 logging.basicConfig(level=logging.INFO)
@@ -11,12 +12,18 @@ logger = logging.getLogger(__name__)
 async def create_pool(app: FastAPI, dsn: str) -> None:
     max_retries = 10
     retry_delay = 5
+    pool_min_size = int(os.getenv("DB_POOL_MIN_SIZE", "1"))
+    pool_max_size = int(os.getenv("DB_POOL_MAX_SIZE", "20"))
 
     for attempt in range(1, max_retries + 1):
         try:
             logger.info(f"Attempt {attempt}/{max_retries}: Connecting to database...")
 
-            app.state.pool = await asyncpg.create_pool(dsn, min_size=1, max_size=5)
+            app.state.pool = await asyncpg.create_pool(
+                dsn,
+                min_size=pool_min_size,
+                max_size=pool_max_size,
+            )
 
             async with app.state.pool.acquire() as conn:
                 await conn.execute(

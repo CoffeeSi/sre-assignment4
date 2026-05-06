@@ -1,0 +1,53 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker-containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        regex: '/(.*)'
+        target_label: container
+      - source_labels: [__meta_docker_container_log_stream]
+        target_label: stream
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+      - source_labels: [__meta_docker_container_label_com_docker_compose_project]
+        target_label: compose_project
+      - target_label: job
+        replacement: docker-containers
+    pipeline_stages:
+      - docker: {}
+      - match:
+          selector: '{service=~"auth-service|user-service|product-service|order-service|chat-service|api-gateway"} |~ "(?i)(connection refused|database.*is not ready|authentication failed|password authentication failed|db not ready|could not connect)"'
+          stages:
+            - metrics:
+                db_connection_failures_total:
+                  type: Counter
+                  description: Count of database connection failure log lines
+                  source: service
+                  prefix: log_inspector_
+                  config:
+                    action: inc
+                    value: "1"
+      - match:
+          selector: '{service=~"auth-service|user-service|product-service|order-service|chat-service|api-gateway|frontend"} |~ "(?i)(application started|starting service|service started|uvicorn running on|started server process)"'
+          stages:
+            - metrics:
+                service_restart_loop_signals_total:
+                  type: Counter
+                  description: Count of startup/restart log lines per service
+                  source: container
+                  prefix: log_inspector_
+                  config:
+                    action: inc
+                    value: "1"

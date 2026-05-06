@@ -1,0 +1,57 @@
+groups:
+  - name: service-availability
+    rules:
+      - alert: ServiceDown
+        expr: up{job="fastapi-services"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Service {{ $labels.instance }} is down"
+          description: "Prometheus cannot scrape {{ $labels.instance }} for more than 2 minutes."
+
+      - alert: HighCPUUsage
+        expr: sum by (job, instance) (rate(process_cpu_seconds_total{job="fastapi-services"}[5m])) > 0.80
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage for {{ $labels.instance }} has stayed above 80% for 5 minutes."
+
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(api_gateway_requests_total{status_code=~"5.."}[5m]))
+            /
+            sum(rate(api_gateway_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          category: reliability
+        annotations:
+          summary: "High error rate detected at api-gateway"
+          description: "The 5xx error ratio at api-gateway is above 5% for 5 minutes."
+
+      - alert: DatabaseConnectionFailuresDetected
+        expr: increase(log_inspector_db_connection_failures_total[1m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+          category: logging
+        annotations:
+          summary: "Repeated database connection failures detected"
+          description: "A service emitted more than 5 database failure log lines in the last minute."
+
+      - alert: ServiceRestartLoopDetected
+        expr: increase(log_inspector_service_restart_loop_signals_total[2m]) >= 10
+        for: 2m
+        labels:
+          severity: warning
+          category: logging
+        annotations:
+          summary: "Possible service restart loop detected"
+          description: "A container emitted restart/startup log lines repeatedly over the last 2 minutes."

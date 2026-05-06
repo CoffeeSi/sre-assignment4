@@ -50,7 +50,7 @@ After startup, the following will be available:
 - Order API: http://localhost:8003/docs
 - Chat API: http://localhost:8005/docs
 - Prometheus: http://localhost:9090
-- Grafana: http://localhost:3002
+- Grafana: http://localhost:3000
 
 ## API Gateway
 
@@ -228,5 +228,43 @@ terraform destroy
 
 ### Prometheus & Grafana
 
-Prometheus scrapes all services at `http://localhost:9090` and Grafana visualizes them at `http://localhost:3002`.
+Prometheus scrapes all services at `http://localhost:9090` and Grafana visualizes them at `http://localhost:3000`.
+
+### Centralized Logging
+
+Container logs are centralized through Loki and Promtail, while services continue to write structured JSON logs to stdout/stderr.
+
+Use the log inspector to scan recent container logs for common failure patterns:
+
+```bash
+python scripts/log_inspector.py
+```
+
+It highlights database connection failures and possible restart loops so you can narrow down the root cause faster.
+
+## Horizontal scaling (quick reference)
+
+To scale services in the running Swarm stack use the provided Makefile helpers or the scale script.
+
+Makefile examples:
+
+```bash
+# Scale order-service to 10 replicas
+make scale-service SERVICE=order-service REPLICAS=10
+
+# Scale using configured environment variable
+make make-scale-order
+```
+
+Script example:
+
+```bash
+# Scale via helper script: ./scripts/scale_service.sh <stack-name> <service-name> <replicas>
+./scripts/scale_service.sh assignment4 order-service 10
+```
+
+Notes:
+
+- Swarm's internal VIP load-balancing (`endpoint_mode: vip`) distributes traffic across replicas automatically.
+- For production-grade load balancing across nodes consider placing an external reverse-proxy/load-balancer in front of the API gateway.
 

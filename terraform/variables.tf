@@ -11,6 +11,18 @@ variable "instance_type" {
   default = "t3.small"
 }
 
+variable "root_volume_size" {
+  type = number
+  description = "Root EBS volume size in GB"
+  default = 30
+}
+
+variable "enable_detailed_monitoring" {
+  type = bool
+  description = "Enable detailed CloudWatch monitoring for the instance"
+  default = true
+}
+
 variable "ami_id" {
   type    = string
   description = "AMI ID for the EC2 instance"
